@@ -1,5 +1,5 @@
 python-dotenv
-python-telegram-bot
+python-telegram-bot[webhooks]
 openai
 google-generativeai
 cerebras_cloud_sdk

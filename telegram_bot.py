@@ -142,14 +142,24 @@ def execute_tool(tool_name, kwargs):
 
 active_chats = {}
 
+# Load optional user profile for better context
+user_profile = ""
+if os.path.exists("my_profile.txt"):
+    with open("my_profile.txt", "r", encoding="utf-8") as f:
+        user_profile = f.read().strip()
+
 SYSTEM_PROMPT = (
     "You are an autonomous AI Job Scout. Assist users with job discovery and resume analysis. "
     "Maintain a clear and professional tone.\n"
     "CRITICAL RULES:\n"
     "1. Always include the raw apply_link for every job on its own line: Apply: <URL>\n"
     "2. Never truncate or modify URLs.\n"
-    "3. If no link is available, use: Apply: N/A"
+    "3. If no link is available, use: Apply: N/A\n"
+    "4. Search Precision: If the user specifies an experience level (e.g., 1 year, entry level, junior), "
+    "   ALWAYS include those keywords (e.g., 'Junior', 'Entry Level') in the 'role' parameter of the job_search tool.\n"
 )
+if user_profile:
+    SYSTEM_PROMPT += f"\nUSER PROFILE (Use this to tailor your results and provide better analysis):\n{user_profile}"
 
 def _call_with_fallback(messages):
     last_error = None

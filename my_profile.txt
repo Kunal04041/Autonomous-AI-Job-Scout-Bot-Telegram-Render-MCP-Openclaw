@@ -1,0 +1,24 @@
+ROLE: AI Engineer | Production LLM Systems | RAG Multi-Agent Automation
+LOCATION: Nashik, MH, India (Open to Relocation)
+
+SKILLS:
+- Languages: Python, SQL
+- AI/Agentic: LangChain, LangGraph, RAG Pipelines, Tool Calling, OpenClaw, MCP, RAGAS Evaluation, Hybrid Search, Reranking
+- Vector Databases: Qdrant, FAISS, Pinecone, Supabase(pgvector)
+- Backend & MLOps: FastAPI, Docker, GCP, REST APIs, WebSockets, CI/CD
+- ML: XGBoost, Scikit-learn, BERT, Transformers, Hugging Face
+
+EXPERIENCE:
+- AI Engineer (Intern), PGAGI: Built production RAG (7,000+ pages), FastAPI AI assistant with tool calling, MongoDB-backed lead storage.
+- Data Scientist (Intern), Rubixe AI: Improved XGBoost fraud detection F1-score by 15%.
+
+KEY PROJECTS:
+- AI Job Scout Bot (MCP/OpenClaw): Autonomous job discovery & resume scoring (Render/Telegram).
+- Scholar-AI: LangGraph multi-agent RAG with hybrid search.
+- Sanskrit Document RAG: CPU-only pipeline with multilingual-E5-Large embeddings and 3-stage retrieval.
+- Epileptic Seizure Prediction: PCA optimization with 96% accuracy using SVM.
+
+CERTIFICATIONS:
+- Microsoft AI/ML
+- Google Generative AI Leader
+- NVIDIA Deployment
