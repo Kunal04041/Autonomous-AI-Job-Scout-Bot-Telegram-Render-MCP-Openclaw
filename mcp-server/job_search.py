@@ -21,7 +21,7 @@ def job_search(
     role: str,
     location: str,
     num_results: int = 5,
-    date_posted: str = "week",
+    date_posted: str = "month",
     employment_type: str = None,
     remote_only: bool = False,
     page: int = 1,
@@ -126,5 +126,8 @@ def job_search(
             "employment_type": j.get("job_employment_type", "N/A"),
         })
 
+    # Sort by posted_at (most recent first)
     results = _deduplicate(results)
+    # Handle cases where posted_at might be 'N/A'
+    results.sort(key=lambda x: x.get("posted_at", "") or "", reverse=True)
     return results[:num_results]

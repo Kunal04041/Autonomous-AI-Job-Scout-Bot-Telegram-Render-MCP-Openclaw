@@ -128,10 +128,26 @@ tools_schema = [
     }
 ]
 
-def execute_tool(tool_name, kwargs):
+def execute_tool(tool_name, kwargs, chat_id):
     try:
         if tool_name == "job_search":
-            return str(do_job_search(**kwargs))
+            # Initialize deduplication set for this chat if not present
+            if "seen_urls" not in active_chats[chat_id]:
+                active_chats[chat_id]["seen_urls"] = set()
+            
+            results = do_job_search(**kwargs)
+            if isinstance(results, list):
+                # Filter out jobs that have already been shown in this session
+                filtered = [j for j in results if j.get("apply_link") not in active_chats[chat_id]["seen_urls"]]
+                # Add new links to the 'seen' memory
+                for j in filtered:
+                    active_chats[chat_id]["seen_urls"].add(j.get("apply_link"))
+                
+                if not filtered:
+                    return "No new results found. Try expanding your search or checking back later."
+                return str(filtered)
+            return str(results)
+        
         elif tool_name == "analyze_resume":
             return str(do_analyze_resume(**kwargs))
         elif tool_name == "get_job_fit_score":
@@ -155,11 +171,12 @@ SYSTEM_PROMPT = (
     "1. Always include the raw apply_link for every job on its own line: Apply: <URL>\n"
     "2. Never truncate or modify URLs.\n"
     "3. If no link is available, use: Apply: N/A\n"
-    "4. Search Precision: If the user specifies an experience level (e.g., 1 year, entry level, junior), "
+    "4. Always show the 'posted_at' date for every job result.\n"
+    "5. Search Precision: If the user specifies an experience level (e.g., 1 year, entry level, junior), "
     "   ALWAYS include those keywords (e.g., 'Junior', 'Entry Level') in the 'role' parameter of the job_search tool.\n"
 )
 if user_profile:
-    SYSTEM_PROMPT += f"\nUSER PROFILE (Use this to tailor your results and provide better analysis):\n{user_profile}"
+    SYSTEM_PROMPT += f"\nUSER PROFILE (Use this for personalized analysis and search tailoring):\n{user_profile}"
 
 def _call_with_fallback(messages):
     last_error = None
@@ -184,9 +201,12 @@ def _call_with_fallback(messages):
 
 def process_chat(chat_id, user_text):
     if chat_id not in active_chats:
-        active_chats[chat_id] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        active_chats[chat_id] = {
+            "messages": [{"role": "system", "content": SYSTEM_PROMPT}],
+            "seen_urls": set()
+        }
     
-    messages = active_chats[chat_id]
+    messages = active_chats[chat_id]["messages"]
     messages.append({"role": "user", "content": user_text})
 
     while True:
@@ -199,10 +219,13 @@ def process_chat(chat_id, user_text):
                 func_name = tool_call.function.name
                 try:
                     kwargs = json.loads(tool_call.function.arguments)
+                    # Automatically favor more inclusive timeframe for better variety
+                    if func_name == "job_search" and "date_posted" not in kwargs:
+                        kwargs["date_posted"] = "month"
                 except Exception:
                     kwargs = {}
                 
-                result_str = execute_tool(func_name, kwargs)
+                result_str = execute_tool(func_name, kwargs, chat_id)
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
