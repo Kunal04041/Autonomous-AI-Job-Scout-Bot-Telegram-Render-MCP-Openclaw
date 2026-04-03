@@ -1,0 +1,6 @@
+python-dotenv
+python-telegram-bot
+openai
+google-generativeai
+cerebras_cloud_sdk
+groq

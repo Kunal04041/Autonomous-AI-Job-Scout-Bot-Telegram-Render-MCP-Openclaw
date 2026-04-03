@@ -1,0 +1,16 @@
+# MCP Server Dependencies
+fastmcp>=0.1.0
+
+# LLM Providers
+openai>=1.0.0                  # used by GitHub Models, SambaNova, OpenRouter
+google-generativeai>=0.8.0     # Gemini
+groq>=0.9.0                    # Groq
+cerebras-cloud-sdk>=1.0.0      # Cerebras
+
+# Utilities
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-mock>=3.12.0
