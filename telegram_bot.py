@@ -2,8 +2,6 @@ import os
 import sys
 import json
 import logging
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from dotenv import load_dotenv
 
 from openai import OpenAI
@@ -220,25 +218,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         logger.error(f"Message handling error: {e}")
         await update.message.reply_text(f"Error: {e}")
 
-def run_health_check_server():
-    class HealthCheckHandler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(b"Service Status: Online")
-        def log_message(self, format, *args): return
-
-    port = int(os.getenv("PORT", 8080))
-    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
 def main() -> None:
-    run_health_check_server()
+    port = int(os.getenv("PORT", 8080))
+    # Render URL provided by user or environment variable
+    url = os.getenv("RENDER_EXTERNAL_URL", "https://openclaw-integrated-mcp-server-for-job.onrender.com")
+    
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    
+    logger.info(f"Starting webhook on port {port}")
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=port,
+        url_path=TELEGRAM_BOT_TOKEN,
+        webhook_url=f"{url}/{TELEGRAM_BOT_TOKEN}",
+        allowed_updates=Update.ALL_TYPES
+    )
 
 if __name__ == "__main__":
     main()
