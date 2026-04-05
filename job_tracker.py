@@ -17,7 +17,7 @@ AUTH_FILE = os.path.join(os.path.dirname(__file__), "service_account.json")
 COLUMNS = [
     "#", "Title", "Company", "Location",
     "Source", "Date Posted", "Date Discovered",
-    "Status", "Applied", "Apply Link"
+    "Applied", "ATS / Type", "Apply Link"
 ]
 
 def _get_ws():
@@ -86,7 +86,7 @@ def _get_ws():
         try:
             ws = sh.worksheet("All Jobs")
         except gspread.exceptions.WorksheetNotFound:
-            ws = sh.add_worksheet(title="All Jobs", rows=1000, cols=12)
+            ws = sh.add_worksheet(title="All Jobs", rows=1000, cols=10)
             ws.append_row(COLUMNS)
             ws.format("A1:J1", {"textFormat": {"bold": True}})
             ws.freeze(rows=1)
@@ -105,7 +105,7 @@ def log_jobs(jobs: list, source: str = "JSearch-Cloud") -> int:
     if not ws:
         return 0
         
-    # Get all current URLs from column J (index 10)
+    # Get all current URLs from column J (index 9)
     all_values = ws.get_all_values()
     existing_urls = set()
     if len(all_values) > 1:
@@ -134,8 +134,8 @@ def log_jobs(jobs: list, source: str = "JSearch-Cloud") -> int:
             source,                                # Source
             str(job.get("posted_at", "N/A")),      # Date Posted
             today,                                 # Date Discovered
-            "Pending",                             # Status (Manual)
             "No",                                  # Applied (Manual)
+            "Manual Apply",                        # ATS / Type
             url,                                   # Apply Link
         ]
         rows_to_append.append(row)
