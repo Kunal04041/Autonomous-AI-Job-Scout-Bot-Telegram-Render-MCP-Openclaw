@@ -35,9 +35,18 @@ def _get_ws():
     ]
     
     try:
-        # 1. Try Environment Variable (For Render/Cloud)
-        env_json = os.getenv("SERVICE_ACCOUNT_JSON")
-        if env_json:
+        # 0. Try Base64 Environment Variable (Most Reliable for Render)
+        env_b64 = os.getenv("SERVICE_ACCOUNT_B64")
+        if env_b64:
+            import base64
+            decoded = base64.b64decode(env_b64).decode("utf-8")
+            creds_dict = json.loads(decoded)
+            creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+            gc = gspread.authorize(creds)
+            
+        # 1. Try Environment Variable (Raw JSON)
+        elif os.getenv("SERVICE_ACCOUNT_JSON"):
+            env_json = os.getenv("SERVICE_ACCOUNT_JSON")
             try:
                 creds_dict = json.loads(env_json, strict=False)
                 
