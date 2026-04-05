@@ -4,3 +4,5 @@ openai
 google-generativeai
 cerebras_cloud_sdk
 groq
+gspread
+google-auth

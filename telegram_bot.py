@@ -143,6 +143,16 @@ def execute_tool(tool_name, kwargs, chat_id):
                 for j in filtered:
                     active_chats[chat_id]["seen_urls"].add(j.get("apply_link"))
                 
+                # Log newly discovered jobs to Google Sheets automatically
+                try:
+                    from job_tracker import log_jobs
+                    added = log_jobs(filtered, source="JSearch-Cloud")
+                    logger.info(f"Logged {added} new jobs to Google Sheets tracker")
+                except ImportError:
+                    logger.warning("job_tracker logic not found/installed")
+                except Exception as e:
+                    logger.error(f"Failed to log jobs to Google Sheet: {e}")
+                
                 if not filtered:
                     return "No new results found. Try expanding your search or checking back later."
                 return str(filtered)
@@ -168,15 +178,18 @@ SYSTEM_PROMPT = (
     "You are an autonomous AI Job Scout. Assist users with job discovery and resume analysis. "
     "Maintain a clear and professional tone.\n"
     "CRITICAL RULES:\n"
-    "1. Always include the raw apply_link for every job on its own line: Apply: <URL>\n"
-    "2. Never truncate or modify URLs.\n"
-    "3. If no link is available, use: Apply: N/A\n"
-    "4. Always show the 'posted_at' date for every job result.\n"
-    "5. Search Precision: If the user specifies an experience level (e.g., 1 year, entry level, junior), "
-    "   ALWAYS include those keywords (e.g., 'Junior', 'Entry Level') in the 'role' parameter of the job_search tool.\n"
+    "1. ONLY search for Junior, Entry-Level, Graduate, or Associate roles.\n"
+    "2. Acceptable Experience Ranges: 0-1, 0-2, 0-3, 1-2, 1-3, or 2-3 years. If the lower bound is 2 years or less, it is acceptable.\n"
+    "3. NEVER search for 'Senior', 'Lead', 'Manager', 'Architect', 'Principal', or 'Staff'.\n"
+    "4. Always include the raw apply_link for every job on its own line: Link: <URL>\n"
+    "5. Format each job exactly as:\n"
+    "   * [Job Title] @ [Company]\n"
+    "   Location: [Place]\n"
+    "   Posted: [Date]\n"
+    "   Link: [Apply Link]\n"
+    "6. Do not invent jobs. Only list jobs returned by job_search."
 )
-if user_profile:
-    SYSTEM_PROMPT += f"\nUSER PROFILE (Use this for personalized analysis and search tailoring):\n{user_profile}"
+
 
 def _call_with_fallback(messages):
     last_error = None

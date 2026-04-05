@@ -20,9 +20,11 @@ node_modules/
 # Cloned repositories / Subprojects
 openclaw/
 
-# Secrets
+# Keys and Secrets
 .env
 *.env
+*.json
+service_account.json
 
 # Pytest
 .pytest_cache/
