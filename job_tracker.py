@@ -39,7 +39,14 @@ def _get_ws():
         env_json = os.getenv("SERVICE_ACCOUNT_JSON")
         if env_json:
             try:
-                creds_dict = json.loads(env_json)
+                # strict=False helps with weird formatting
+                creds_dict = json.loads(env_json, strict=False)
+                
+                # CRITICAL: Render environment variables sometimes double-escape \n
+                # causing Google Auth to throw 'Invalid JWT Signature'
+                if "private_key" in creds_dict:
+                    creds_dict["private_key"] = creds_dict["private_key"].replace('\\n', '\n')
+                    
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
                 gc = gspread.authorize(creds)
             except json.JSONDecodeError as e:
