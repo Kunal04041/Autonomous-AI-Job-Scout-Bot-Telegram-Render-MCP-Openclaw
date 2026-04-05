@@ -3,8 +3,11 @@ Maintains a persistent GOOGLE SHEET of all scraped jobs manually applied via JSe
 """
 import os
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Tracking Google Sheet URL
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1VyHIhJWGLKbNoNiJroYNeS3at5xpMtD-ExYRUojrtLA"
@@ -22,8 +25,8 @@ def _get_ws():
     try:
         import gspread
         from google.oauth2.service_account import Credentials
-    except ImportError:
-        print("Error: gspread/google-auth not installed.")
+    except ImportError as e:
+        logger.error(f"Error: gspread/google-auth not installed: {e}")
         return None
 
     scopes = [
@@ -39,8 +42,8 @@ def _get_ws():
                 creds_dict = json.loads(env_json)
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
                 gc = gspread.authorize(creds)
-            except json.JSONDecodeError:
-                print("Error: SERVICE_ACCOUNT_JSON is not valid JSON.")
+            except json.JSONDecodeError as e:
+                logger.error(f"Error: SERVICE_ACCOUNT_JSON is not valid JSON: {e}")
                 return None
         
         # 2. Try Local File (For Laptop testing)
@@ -49,7 +52,7 @@ def _get_ws():
             gc = gspread.authorize(creds)
             
         else:
-            print("Error: No Service Account credentials found.")
+            logger.error("Error: No Google Sheet Service Account credentials found. Set SERVICE_ACCOUNT_JSON env var.")
             return None
 
         # Connect to Sheet
@@ -64,7 +67,7 @@ def _get_ws():
         return ws
 
     except Exception as e:
-        print(f"Google Sheet Auth Error: {e}")
+        logger.error(f"Google Sheet Auth/Connect Error: {e}")
         return None
 
 def log_jobs(jobs: list, source: str = "JSearch-Cloud") -> int:
