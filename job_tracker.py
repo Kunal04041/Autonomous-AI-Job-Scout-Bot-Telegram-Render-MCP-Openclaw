@@ -39,18 +39,28 @@ def _get_ws():
         env_json = os.getenv("SERVICE_ACCOUNT_JSON")
         if env_json:
             try:
-                # strict=False helps with weird formatting
                 creds_dict = json.loads(env_json, strict=False)
                 
-                # CRITICAL: Render environment variables sometimes double-escape \n
-                # causing Google Auth to throw 'Invalid JWT Signature'
+                # CRITICAL: Render destroys PEM formatting. 
+                # Reconstruct the private key violently.
                 if "private_key" in creds_dict:
-                    creds_dict["private_key"] = creds_dict["private_key"].replace('\\n', '\n')
+                    pk = creds_dict["private_key"]
+                    pk = pk.replace("\\n", "\n")  # Fix double escapes
                     
+                    # If Render stripped newlines into spaces:
+                    if "-----BEGIN PRIVATE KEY----- " in pk or "-----BEGIN PRIVATE KEY-----" in pk:
+                        # Extract just the raw body of the key, minus headers
+                        body = pk.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "")
+                        # Remove all whitespace, spaces, newlines from body
+                        import re
+                        body = re.sub(r'\s+', '', body)
+                        # Re-wrap properly
+                        creds_dict["private_key"] = f"-----BEGIN PRIVATE KEY-----\n{body}\n-----END PRIVATE KEY-----\n"
+                        
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
                 gc = gspread.authorize(creds)
-            except json.JSONDecodeError as e:
-                logger.error(f"Error: SERVICE_ACCOUNT_JSON is not valid JSON: {e}")
+            except Exception as e:
+                logger.error(f"Error parsing SERVICE_ACCOUNT_JSON: {e}")
                 return None
         
         # 2. Try Local File (For Laptop testing)
