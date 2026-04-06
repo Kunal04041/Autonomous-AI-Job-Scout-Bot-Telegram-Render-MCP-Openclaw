@@ -106,8 +106,8 @@ def job_search(
     results = []
     for j in jobs_raw:
         description = j.get("job_description", "") or ""
-        if len(description) > 2000:
-            description = description[:2000] + "..."
+        if len(description) > 300:
+            description = description[:300] + "..."
 
         apply_link = (
             j.get("job_apply_link")
