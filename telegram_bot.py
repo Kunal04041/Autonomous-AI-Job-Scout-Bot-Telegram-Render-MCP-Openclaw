@@ -220,6 +220,13 @@ def process_chat(chat_id, user_text):
         }
     
     messages = active_chats[chat_id]["messages"]
+    
+    # ── Auto-Truncate History to prevent 8000 Token Limit Crashes ──
+    if len(messages) > 8:
+        logger.info(f"Chat {chat_id} history reached {len(messages)} messages. Truncating.")
+        # Keep only the SYSTEM prompt (index 0)
+        messages[:] = [messages[0]]
+        
     messages.append({"role": "user", "content": user_text})
 
     while True:
