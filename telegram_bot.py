@@ -168,6 +168,9 @@ def execute_tool(tool_name, kwargs, chat_id):
 
 active_chats = {}
 
+# Cold start flag — True when server just booted, resets after first message is handled
+_server_cold = True
+
 # Load optional user profile for better context
 user_profile = ""
 if os.path.exists("my_profile.txt"):
@@ -188,6 +191,12 @@ SYSTEM_PROMPT = (
     "   Posted: [Date]\n"
     "   Link: [Apply Link]\n"
     "6. Do not invent jobs. Only list jobs returned by job_search."
+)
+
+COLD_START_MSG = (
+    "Hey! The Job Scout server was in sleep mode as Render free tier spins down after 15 min of inactivity.\n\n"
+    "Your message has been received — I'm now fully booting up and will process it in ~30\u201360 seconds.\n\n"
+    "Sit tight! \U0001f680"
 )
 
 
@@ -260,10 +269,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Job Scout active. How can I assist your career search?")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    global _server_cold
     user_text = update.message.text
     chat_id = update.message.chat_id
     await context.bot.send_chat_action(chat_id=chat_id, action='typing')
-    
+
+    # Send cold start notice on the very first message after server boot
+    if _server_cold:
+        _server_cold = False
+        logger.info(f"Cold start detected — sending wake-up notice to chat {chat_id}")
+        await update.message.reply_text(COLD_START_MSG)
+
     try:
         response_text = process_chat(chat_id, user_text)
         await update.message.reply_text(response_text)
@@ -291,4 +307,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
